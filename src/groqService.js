@@ -6,8 +6,10 @@
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 const SYSTEM_PROMPT = `You are a business intelligence analyst that extracts firmographic data about companies from web search snippets.
-
+CRITICAL RULES:
 Extract ONLY what is explicitly mentioned in the provided text. Do NOT guess or hallucinate data.
+If funding amount or stage is not explicitly mentioned, return null.
+For the "evidence_url" field, provide the exact URL from the [Organic Source: URL] tag that contained the funding or company information.
 If a field cannot be determined from the text, use null.
 
 For numeric ranges (employees, revenue), extract reasonable min/max bounds:
@@ -35,6 +37,7 @@ Respond ONLY with a valid JSON object, no markdown, no explanation:
   "revenue_max_usd": integer or null,
   "funding_stage_include": string or null,
   "total_funding_usd": integer or null,
+  "evidence_url": string or null,
   "founded_year_min": integer or null,
   "founded_year_max": integer or null,
   "company_status": string or null,
