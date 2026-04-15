@@ -1,0 +1,83 @@
+{
+  "title": "Firmographic Enrichment Actor",
+  "type": "object",
+  "schemaVersion": 1,
+  "description": "Enriches company firmographic data by inputting website URLs (single or CSV).Extract employee range, revenue, funding stage, founding year, and company status.",
+  "properties": {
+    "websiteUrl": {
+      "title": "Single Website URL",
+      "type": "string",
+      "description": "A single company website URL to enrich. Leave empty if uploading a CSV.",
+      "editor": "textfield",
+      "example": "https://stripe.com"
+    },
+    "csvFileUrl": {
+      "title": "CSV File URL ",
+      "type": "string",
+      "description": "URL to a CSV file containing a column named 'website' with company URLs.",
+      "editor": "textfield",
+      
+    },
+    "csvColumnName": {
+      "title": "CSV Column Name",
+      "type": "string",
+      "description": "The column name in your CSV file containing website URLs.",
+      "default": "website",
+      "editor": "textfield"
+    },
+    "serpApiKey": {
+      "title": "SERP API Key (Google AI Mode)",
+      "type": "string",
+      "description": "Your SerpApi.com API key.",
+      "editor": "textfield",
+      "isSecret": true
+    },
+    "groqApiKey": {
+      "title": "Groq API Key",
+      "type": "string",
+      "description": "Your Groq API key. Used for LLM-based firmographic extraction.",
+      "editor": "textfield",
+      "isSecret": true
+    },
+    "groqModel": {
+      "title": "Groq Model",
+      "type": "string",
+      "description": "Groq model to use for extraction. llama-3.1-8b-instant is fastest and free.",
+      "default": "llama-3.1-8b-instant",
+      "enum": [
+        "llama-3.1-8b-instant",
+        "llama-3.3-70b-versatile",
+        "llama3-8b-8192",
+        "mixtral-8x7b-32768"
+      ],
+      "editor": "select"
+    },
+    "maxConcurrency": {
+      "title": "Max Concurrent Requests",
+      "type": "integer",
+      "description": "Maximum number of URLs to process simultaneously. Keep low to avoid API rate limits.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10,
+      "editor": "number"
+    },
+    "delayBetweenRequestsMs": {
+      "title": "Delay Between Requests (ms)",
+      "type": "integer",
+      "description": "Milliseconds to wait between SERP API calls to avoid rate limiting.",
+      "default": 1000,
+      "minimum": 500,
+      "maximum": 10000,
+      "editor": "number"
+    },
+    "outputFormat": {
+      "title": "Output Format",
+      "type": "string",
+      "description": "Dataset output is always available. This also saves a CSV file to the key-value store.",
+      "default": "both",
+      "enum": ["dataset_only", "csv_only", "both"],
+      "editor": "select"
+    }
+  },
+  "required": ["serpApiKey", "groqApiKey"]
+}
