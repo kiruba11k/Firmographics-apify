@@ -19,6 +19,7 @@ export const CSV_COLUMNS = [
   'revenue_max_usd',
   'funding_stage_include',
   'total_funding_usd',
+  'evidence_url',
   'founded_year_min',
   'founded_year_max',
   'company_status',
