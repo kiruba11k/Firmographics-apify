@@ -43,15 +43,12 @@ async function fetchSerpResult(query, apiKey, fetchFn) {
 }
 
 /**
- * Extract text snippets from SERP result (AI overview + organic)
- */
-/**
- * Extract text snippets from SERP result (AI overview + organic)
+ * Extract text snippets from SERP result (AI overview, Knowledge Graph, Answer Box, Organic)
  */
 function extractTextFromSerp(serpData) {
   const parts = [];
 
-  // 1. AI Overview (Google's AI-generated summary)
+  // 1. AI Overview
   if (serpData.ai_overview) {
     const ao = serpData.ai_overview;
     if (ao.text_blocks) {
@@ -68,7 +65,7 @@ function extractTextFromSerp(serpData) {
     if (ao.snippet) parts.push(`[AI Overview] ${ao.snippet}`);
   }
 
-  // 2. Knowledge Graph (sidebar company info)
+  // 2. Knowledge Graph
   if (serpData.knowledge_graph) {
     const kg = serpData.knowledge_graph;
     if (kg.description) parts.push(`[Knowledge Graph] ${kg.description}`);
@@ -93,7 +90,7 @@ function extractTextFromSerp(serpData) {
     if (ab.snippet) parts.push(`[Answer Box] ${ab.snippet}`);
   }
 
-  // 4. Organic results snippets (top 5)
+  // 4. Organic results (top 5)
   if (serpData.organic_results) {
     for (const result of serpData.organic_results.slice(0, 5)) {
       if (result.snippet) {
@@ -104,6 +101,7 @@ function extractTextFromSerp(serpData) {
 
   return parts.join('\n');
 }
+
 /**
  * Main function: run multiple queries for a domain, collect all context
  */
@@ -114,18 +112,26 @@ export async function gatherCompanyContext(domain, apiKey, fetchFn, log) {
 
   for (const query of queries) {
     try {
-      log.debug(`SERP query: "${query}"`);
+      // Safely check if log exists before calling debug
+      if (log && typeof log.debug === 'function') log.debug(`SERP query: "${query}"`);
+      
       const serpData = await fetchSerpResult(query, apiKey, fetchFn);
       const text = extractTextFromSerp(serpData);
+      
       if (text.trim()) {
         allContext.push(`--- Query: "${query}" ---\n${text}`);
       }
       searchCount++;
     } catch (err) {
-      log.warning(`SERP query failed for "${query}": ${err.message}`);
+      if (log && typeof log.warning === 'function') {
+        log.warning(`SERP query failed for "${query}": ${err.message}`);
+      }
     }
   }
 
-  log.info(`Gathered context from ${searchCount} SERP queries for ${domain}`);
+  if (log && typeof log.info === 'function') {
+    log.info(`Gathered context from ${searchCount} SERP queries for ${domain}`);
+  }
+  
   return allContext.join('\n\n');
 }
