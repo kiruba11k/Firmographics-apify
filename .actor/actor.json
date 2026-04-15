@@ -1,0 +1,12 @@
+{
+  "actorSpecification": 1,
+  "name": "firmographic-enrichment",
+  "title": "Firmographic Enrichment Actor",
+  "description": "Enrich company data (employees, revenue, funding stage, founding year, status) from website URLs. Supports single URL or CSV batch input.",
+  "version": "1.0",
+  "meta": {
+    "templateId": "js-start"
+  },
+  "input": "./input_schema.json",
+  "dockerfile": "../Dockerfile"
+}
