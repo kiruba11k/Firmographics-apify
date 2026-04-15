@@ -18,6 +18,7 @@ import {
   normalizeUrl,
   extractDomain,
   recordsToCsv,
+  CSV_COLUMNS,
 } from './csvUtils.js';
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -99,9 +100,14 @@ try {
       if (!serpContext.trim()) {
         record.data_confidence = 'low';
       } else {
-        const firmographics = await extractFirmographics(serpContext, 
-  groqApiKey, 
-  groqModel);
+const firmographics = await extractFirmographics(
+    domain,          // 1. domain
+    serpContext,     // 2. serpContext
+    groqApiKey,      // 3. apiKey
+    groqModel,       // 4. model
+    fetch,           // 5. fetchFn (global fetch)
+    log              // 6. log (the Apify logger)
+);
         
         // Clean mapping to ensure no double keys
         CSV_COLUMNS.forEach(col => {
