@@ -99,7 +99,9 @@ try {
       if (!serpContext.trim()) {
         record.data_confidence = 'low';
       } else {
-        const firmographics = await extractFirmographics(...);
+        const firmographics = await extractFirmographics(serpContext, 
+  groqApiKey, 
+  groqModel);
         
         // Clean mapping to ensure no double keys
         CSV_COLUMNS.forEach(col => {
