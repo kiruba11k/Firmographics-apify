@@ -98,6 +98,11 @@ function extractTextFromSerp(serpData) {
       }
     }
   }
+  if (serpData.rich_snippet && serpData.rich_snippet.detected_extensions) {
+  const ext = serpData.rich_snippet.detected_extensions;
+  if (ext.revenue) parts.push(`[Rich Snippet] Revenue: ${ext.revenue}`);
+  if (ext.employees) parts.push(`[Rich Snippet] Employees: ${ext.employees}`);
+}
 
   return parts.join('\n');
 }
