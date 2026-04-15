@@ -2,42 +2,14 @@
   "title": "Firmographic Enrichment Actor",
   "type": "object",
   "schemaVersion": 1,
-  "description": "Enriches company firmographic data by inputting website URLs (single or CSV).Extract employee range, revenue, funding stage, founding year, and company status.",
+  "description": "Enriches company firmographic data from a website URL. Extract employee range, revenue, funding stage, founding year, and company status.",
   "properties": {
     "websiteUrl": {
       "title": "Single Website URL",
       "type": "string",
-      "description": "A single company website URL to enrich. Leave empty if uploading a CSV.",
+      "description": "A single company website URL to enrich.",
       "editor": "textfield",
       "example": "https://stripe.com"
-    },
-    "csvFileUrl": {
-      "title": "CSV File URL ",
-      "type": "string",
-      "description": "URL to a CSV file containing a column named 'website' with company URLs.",
-      "editor": "textfield",
-      
-    },
-    "csvColumnName": {
-      "title": "CSV Column Name",
-      "type": "string",
-      "description": "The column name in your CSV file containing website URLs.",
-      "default": "website",
-      "editor": "textfield"
-    },
-    "serpApiKey": {
-      "title": "SERP API Key (Google AI Mode)",
-      "type": "string",
-      "description": "Your SerpApi.com API key.",
-      "editor": "textfield",
-      "isSecret": true
-    },
-    "groqApiKey": {
-      "title": "Groq API Key",
-      "type": "string",
-      "description": "Your Groq API key. Used for LLM-based firmographic extraction.",
-      "editor": "textfield",
-      "isSecret": true
     },
     "groqModel": {
       "title": "Groq Model",
@@ -79,5 +51,5 @@
       "editor": "select"
     }
   },
-  "required": ["serpApiKey", "groqApiKey"]
+  "required": ["websiteUrl"]
 }

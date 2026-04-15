@@ -2,7 +2,7 @@
  * main.js — Firmographic Enrichment Actor
  *
  * Pipeline:
- *  1. Read input (single URL or CSV file URL)
+ *  1. Read input (single website URL)
  *  2. For each company domain:
  *     a. Run 3 Google SERP queries (via SerpApi AI mode)
  *     b. Aggregate all text snippets + AI overviews + knowledge graph
@@ -12,11 +12,9 @@
  */
 
 import { Actor, log } from 'apify';
-import fetch from 'node-fetch';
 import { gatherCompanyContext } from './serpService.js';
 import { extractFirmographics } from './groqService.js';
 import {
-  parseUrlsFromCsv,
   normalizeUrl,
   extractDomain,
   recordsToCsv,
@@ -31,23 +29,29 @@ try {
 
   // ── Validate required inputs ──────────────────────────────────────────────
   if (!input) throw new Error('No input provided. Please configure the actor input.');
-  if (!input.serpApiKey) throw new Error('serpApiKey is required. Get a free key at https://serpapi.com');
-  if (!input.groqApiKey) throw new Error('groqApiKey is required. Get a free key at https://console.groq.com');
 
   const {
     websiteUrl,
-    csvFileUrl,
-    csvColumnName = 'website',
-    serpApiKey,
-    groqApiKey,
+    serpApiKey: inputSerpApiKey,
+    groqApiKey: inputGroqApiKey,
     groqModel = 'llama-3.1-8b-instant',
     maxConcurrency = 3,
     delayBetweenRequestsMs = 1000,
     outputFormat = 'both',
   } = input;
 
-  if (!websiteUrl && !csvFileUrl) {
-    throw new Error('Either websiteUrl or csvFileUrl must be provided.');
+  const serpApiKey = inputSerpApiKey || process.env.SERP_API_KEY;
+  const groqApiKey = inputGroqApiKey || process.env.GROQ_API_KEY;
+
+  if (!serpApiKey) {
+    throw new Error('Missing SerpApi key. Set SERP_API_KEY env var or provide serpApiKey in input.');
+  }
+  if (!groqApiKey) {
+    throw new Error('Missing Groq key. Set GROQ_API_KEY env var or provide groqApiKey in input.');
+  }
+
+  if (!websiteUrl) {
+    throw new Error('websiteUrl is required.');
   }
 
   // ── Collect URLs ──────────────────────────────────────────────────────────
@@ -58,23 +62,6 @@ try {
     if (!normalized) throw new Error(`Invalid website URL: ${websiteUrl}`);
     urlsToProcess.push(normalized);
     log.info(`Single URL mode: ${normalized}`);
-  }
-
-  if (csvFileUrl) {
-    log.info(`Fetching CSV from: ${csvFileUrl}`);
-    let csvResp;
-    try {
-      csvResp = await fetch(csvFileUrl);
-    } catch (err) {
-      throw new Error(`Failed to fetch CSV file: ${err.message}`);
-    }
-    if (!csvResp.ok) {
-      throw new Error(`CSV fetch failed with status ${csvResp.status}: ${csvFileUrl}`);
-    }
-    const csvContent = await csvResp.text();
-    const { urls, totalRows, columnUsed } = parseUrlsFromCsv(csvContent, csvColumnName);
-    log.info(`CSV parsed: ${totalRows} rows → ${urls.length} unique URLs (column: "${columnUsed}")`);
-    urlsToProcess.push(...urls);
   }
 
   // Deduplicate
