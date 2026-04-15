@@ -85,14 +85,16 @@ function extractTextFromSerp(serpData) {
   }
 
   // Organic results snippets (top 4)
-  if (serpData.organic_results) {
-    for (const result of serpData.organic_results.slice(0, 4)) {
-      if (result.snippet) parts.push(`[Organic] ${result.title}: ${result.snippet}`);
-      if (result.about_this_result?.keywords) {
-        parts.push(`[Organic Keywords] ${result.about_this_result.keywords.join(', ')}`);
+if (serpData.organic_results) {
+    for (const result of serpData.organic_results.slice(0, 5)) {
+      if (result.snippet) {
+        // We add the source URL here so the LLM can see it
+        parts.push(`[Organic Source: ${result.link}] ${result.title}: ${result.snippet}`);
       }
     }
   }
+  return parts.join('\n');
+}
 
   // Answer box
   if (serpData.answer_box) {
