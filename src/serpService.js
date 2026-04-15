@@ -45,10 +45,13 @@ async function fetchSerpResult(query, apiKey, fetchFn) {
 /**
  * Extract text snippets from SERP result (AI overview + organic)
  */
+/**
+ * Extract text snippets from SERP result (AI overview + organic)
+ */
 function extractTextFromSerp(serpData) {
   const parts = [];
 
-  // AI Overview (Google's AI-generated summary)
+  // 1. AI Overview (Google's AI-generated summary)
   if (serpData.ai_overview) {
     const ao = serpData.ai_overview;
     if (ao.text_blocks) {
@@ -65,7 +68,7 @@ function extractTextFromSerp(serpData) {
     if (ao.snippet) parts.push(`[AI Overview] ${ao.snippet}`);
   }
 
-  // Knowledge Graph (sidebar company info)
+  // 2. Knowledge Graph (sidebar company info)
   if (serpData.knowledge_graph) {
     const kg = serpData.knowledge_graph;
     if (kg.description) parts.push(`[Knowledge Graph] ${kg.description}`);
@@ -76,7 +79,6 @@ function extractTextFromSerp(serpData) {
     if (kg.parent_organization) parts.push(`[Knowledge Graph] Parent: ${kg.parent_organization}`);
     if (kg.type) parts.push(`[Knowledge Graph] Type: ${kg.type}`);
 
-    // Extra attributes
     if (kg.attributes) {
       for (const [key, val] of Object.entries(kg.attributes)) {
         parts.push(`[Knowledge Graph] ${key}: ${val}`);
@@ -84,28 +86,24 @@ function extractTextFromSerp(serpData) {
     }
   }
 
-  // Organic results snippets (top 4)
-if (serpData.organic_results) {
-    for (const result of serpData.organic_results.slice(0, 5)) {
-      if (result.snippet) {
-        // We add the source URL here so the LLM can see it
-        parts.push(`[Organic Source: ${result.link}] ${result.title}: ${result.snippet}`);
-      }
-    }
-  }
-  return parts.join('\n');
-}
-
-  // Answer box
+  // 3. Answer box
   if (serpData.answer_box) {
     const ab = serpData.answer_box;
     if (ab.answer) parts.push(`[Answer Box] ${ab.answer}`);
     if (ab.snippet) parts.push(`[Answer Box] ${ab.snippet}`);
   }
 
+  // 4. Organic results snippets (top 5)
+  if (serpData.organic_results) {
+    for (const result of serpData.organic_results.slice(0, 5)) {
+      if (result.snippet) {
+        parts.push(`[Organic Source: ${result.link}] ${result.title}: ${result.snippet}`);
+      }
+    }
+  }
+
   return parts.join('\n');
 }
-
 /**
  * Main function: run multiple queries for a domain, collect all context
  */
