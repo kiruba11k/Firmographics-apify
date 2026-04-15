@@ -93,25 +93,21 @@ try {
       enriched_at: new Date().toISOString(),
     };
 
-    try {
-      // Step 1: SERP research
+try {
       const serpContext = await gatherCompanyContext(url, serpApiKey, fetch, log);
 
       if (!serpContext.trim()) {
-        log.warning(`No SERP context found for ${domain}`);
-        record.error = 'No SERP data found';
         record.data_confidence = 'low';
       } else {
-        // Step 2: LLM extraction
-        const firmographics = await extractFirmographics(
-          domain,
-          serpContext,
-          groqApiKey,
-          groqModel,
-          fetch,
-          log
-        );
-        Object.assign(record, firmographics);
+        const firmographics = await extractFirmographics(...);
+        
+        // Clean mapping to ensure no double keys
+        CSV_COLUMNS.forEach(col => {
+          if (firmographics[col] !== undefined) {
+            record[col] = firmographics[col];
+          }
+        });
+        
         succeeded++;
       }
     } catch (err) {
