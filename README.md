@@ -2,7 +2,7 @@
 
 Automatically enrich company data from website URLs using **Google SERP AI Mode** + **Groq LLM**.
 
-Input a single URL or a CSV of URLs → Get structured firmographic data:
+Input a single URL → Get structured firmographic data:
 
 | Field | Example |
 |---|---|
@@ -35,31 +35,15 @@ Input a single URL or a CSV of URLs → Get structured firmographic data:
 
 ### 2. Configure Input
 
-**Single URL:**
+Set these environment variables in your Actor settings:
+- `SERP_API_KEY`
+- `GROQ_API_KEY`
+
+Then provide the input:
 ```json
 {
-  "websiteUrl": "https://stripe.com",
-  "serpApiKey": "YOUR_SERPAPI_KEY",
-  "groqApiKey": "YOUR_GROQ_KEY"
+  "websiteUrl": "https://stripe.com"
 }
-```
-
-**CSV Batch:**
-```json
-{
-  "csvFileUrl": "https://your-server.com/companies.csv",
-  "csvColumnName": "website",
-  "serpApiKey": "YOUR_SERPAPI_KEY",
-  "groqApiKey": "YOUR_GROQ_KEY"
-}
-```
-
-### 3. CSV Format
-Your CSV just needs a column with website URLs:
-```csv
-website,company_name
-https://stripe.com,Stripe
-https://notion.so,Notion
 ```
 
 ---
@@ -75,12 +59,11 @@ firmographic-actor/
 │   ├── main.js              # Actor entrypoint, orchestration
 │   ├── serpService.js       # Google SERP API queries
 │   ├── groqService.js       # Groq LLM extraction
-│   └── csvUtils.js          # CSV parsing + output
+│   └── csvUtils.js          # CSV output helpers
 ├── storage/
 │   └── key_value_stores/
 │       └── default/
 │           └── INPUT.json   # Local dev input
-├── sample_input.csv         # Example CSV for batch mode
 ├── test_local.js            # Local test runner
 ├── Dockerfile               # Apify deployment container
 ├── package.json

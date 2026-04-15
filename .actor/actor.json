@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "firmographic-enrichment",
   "title": "Firmographic Enrichment Actor",
-  "description": "Enrich company data (employees, revenue, funding stage, founding year, status) from website URLs. Supports single URL or CSV batch input.",
+  "description": "Enrich company data (employees, revenue, funding stage, founding year, status) from a website URL. Uses SERP_API_KEY and GROQ_API_KEY environment variables by default.",
   "version": "1.0",
   "meta": {
     "templateId": "js-start"
