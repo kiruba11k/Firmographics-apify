@@ -3,12 +3,11 @@
  *
  * Pipeline:
  *  1. Read input (single website URL)
- *  2. For each company domain:
- *     a. Run 3 Google SERP queries (via SerpApi AI mode)
- *     b. Aggregate all text snippets + AI overviews + knowledge graph
- *     c. Send to Groq LLM for structured extraction
- *  3. Push each result to Apify Dataset
- *  4. Optionally save CSV to Key-Value store
+ *  2. Run 5 targeted Google SERP queries + direct about-page scrape
+ *  3. Aggregate all signals with source attribution
+ *  4. Send to Groq LLM with strict anti-hallucination prompt
+ *  5. Normalise + validate output
+ *  6. Push to Apify Dataset + optionally save CSV to Key-Value Store
  */
 
 import { Actor, log } from 'apify';
@@ -21,72 +20,50 @@ import {
   CSV_COLUMNS,
 } from './csvUtils.js';
 
-// ─── Main ────────────────────────────────────────────────────────────────────
-
 await Actor.init();
 
 try {
   const input = await Actor.getInput();
 
-  // ── Validate required inputs ──────────────────────────────────────────────
   if (!input) throw new Error('No input provided. Please configure the actor input.');
 
   const {
     websiteUrl,
     serpApiKey: inputSerpApiKey,
     groqApiKey: inputGroqApiKey,
-    groqModel = 'llama-3.1-8b-instant',
-    maxConcurrency = 3,
-    delayBetweenRequestsMs = 1000,
+    groqModel = 'llama-3.3-70b-versatile', // Better accuracy for extraction
+    maxConcurrency = 2,                      // Conservative default to respect rate limits
+    delayBetweenRequestsMs = 1500,
     outputFormat = 'both',
   } = input;
 
   const serpApiKey = inputSerpApiKey || process.env.SERP_API_KEY;
   const groqApiKey = inputGroqApiKey || process.env.GROQ_API_KEY;
 
-  if (!serpApiKey) {
-    throw new Error('Missing SerpApi key. Set SERP_API_KEY env var or provide serpApiKey in input.');
-  }
-  if (!groqApiKey) {
-    throw new Error('Missing Groq key. Set GROQ_API_KEY env var or provide groqApiKey in input.');
-  }
+  if (!serpApiKey) throw new Error('Missing SerpApi key. Set SERP_API_KEY env var or provide serpApiKey in input.');
+  if (!groqApiKey) throw new Error('Missing Groq key. Set GROQ_API_KEY env var or provide groqApiKey in input.');
+  if (!websiteUrl) throw new Error('websiteUrl is required.');
 
-  if (!websiteUrl) {
-    throw new Error('websiteUrl is required.');
-  }
+  // ── Normalize and validate URL ─────────────────────────────────────────────
+  const normalizedUrl = normalizeUrl(websiteUrl);
+  if (!normalizedUrl) throw new Error(`Invalid website URL: ${websiteUrl}`);
 
-  // ── Collect URLs ──────────────────────────────────────────────────────────
-  let urlsToProcess = [];
+  const urlsToProcess = [normalizedUrl];
+  log.info(`Processing URL: ${normalizedUrl}`);
 
-  if (websiteUrl) {
-    const normalized = normalizeUrl(websiteUrl);
-    if (!normalized) throw new Error(`Invalid website URL: ${websiteUrl}`);
-    urlsToProcess.push(normalized);
-    log.info(`Single URL mode: ${normalized}`);
-  }
-
-  // Deduplicate
-  urlsToProcess = [...new Set(urlsToProcess)];
-  log.info(`Total URLs to enrich: ${urlsToProcess.length}`);
-
-  if (urlsToProcess.length === 0) {
-    throw new Error('No valid URLs found to process.');
-  }
-
-  // ── Process URLs with concurrency control ─────────────────────────────────
+  // ── Core enrichment function ───────────────────────────────────────────────
   const results = [];
   let processed = 0;
   let succeeded = 0;
   let failed = 0;
 
-  // Chunk URLs for concurrency
   async function processUrl(url) {
     const domain = extractDomain(url);
-    log.info(`[${processed + 1}/${urlsToProcess.length}] Processing: ${domain}`);
+    const idx = processed + 1;
+    const total = urlsToProcess.length;
 
-    await Actor.setStatusMessage(
-      `Enriching ${processed + 1}/${urlsToProcess.length}: ${domain}`
-    );
+    log.info(`[${idx}/${total}] Starting enrichment: ${domain}`);
+    await Actor.setStatusMessage(`Enriching ${idx}/${total}: ${domain} — gathering SERP data...`);
 
     const record = {
       company_domain: domain,
@@ -94,29 +71,43 @@ try {
       enriched_at: new Date().toISOString(),
     };
 
-try {
-      const serpContext = await gatherCompanyContext(url, serpApiKey, fetch, log);
+    try {
+      // Step 1: Gather web context
+      const serpContext = await gatherCompanyContext(domain, serpApiKey, fetch, log);
 
       if (!serpContext.trim()) {
+        log.warning(`No SERP context gathered for ${domain}`);
         record.data_confidence = 'low';
+        record.error = 'No SERP data returned — check SerpApi key or domain';
+        failed++;
       } else {
-const firmographics = await extractFirmographics(
-    domain,          // 1. domain
-    serpContext,     // 2. serpContext
-    groqApiKey,      // 3. apiKey
-    groqModel,       // 4. model
-    fetch,           // 5. fetchFn (global fetch)
-    log              // 6. log (the Apify logger)
-);
-        
-        // Clean mapping to ensure no double keys
-        CSV_COLUMNS.forEach(col => {
+        log.info(`Context gathered for ${domain} (${serpContext.length} chars). Running LLM extraction...`);
+        await Actor.setStatusMessage(`Enriching ${idx}/${total}: ${domain} — running LLM extraction...`);
+
+        // Step 2: Extract firmographics via LLM
+        const firmographics = await extractFirmographics(
+          domain,
+          serpContext,
+          groqApiKey,
+          groqModel,
+          fetch,
+          log,
+        );
+
+        // Step 3: Map fields onto record (CSV_COLUMNS as source of truth)
+        for (const col of CSV_COLUMNS) {
           if (firmographics[col] !== undefined) {
             record[col] = firmographics[col];
           }
-        });
-        
+        }
+
+        // Also capture any error message from extraction
+        if (firmographics.error) {
+          record.error = firmographics.error;
+        }
+
         succeeded++;
+        log.info(`✓ ${domain}: confidence=${firmographics.data_confidence}, name="${firmographics.company_name}", employees=${firmographics.employee_min}–${firmographics.employee_max}`);
       }
     } catch (err) {
       log.error(`Failed to enrich ${domain}: ${err.message}`);
@@ -134,47 +125,41 @@ const firmographics = await extractFirmographics(
     return record;
   }
 
-  // Process with concurrency limit
+  // ── Concurrency-limited processing ────────────────────────────────────────
   async function processWithConcurrency(urls, concurrency) {
     const queue = [...urls];
-    const active = new Set();
 
     async function runNext() {
       if (!queue.length) return;
       const url = queue.shift();
-      const promise = processUrl(url).finally(() => {
-        active.delete(promise);
-        // Delay before next
-        return new Promise((r) => setTimeout(r, delayBetweenRequestsMs));
-      });
-      active.add(promise);
-      await promise;
-      if (queue.length) await runNext();
+      await processUrl(url);
+
+      // Respect rate limits
+      if (queue.length) {
+        await new Promise(r => setTimeout(r, delayBetweenRequestsMs));
+        await runNext();
+      }
     }
 
-    // Start initial batch
     const initial = Math.min(concurrency, urls.length);
     await Promise.all(Array.from({ length: initial }, runNext));
   }
 
   await processWithConcurrency(urlsToProcess, maxConcurrency);
 
-  log.info(`\n✅ Enrichment complete: ${succeeded} succeeded, ${failed} failed out of ${urlsToProcess.length} URLs`);
+  log.info(`\n✅ Done: ${succeeded} succeeded, ${failed} failed out of ${urlsToProcess.length} URL(s)`);
 
-  // ── Save CSV to Key-Value Store ───────────────────────────────────────────
+  // ── Save CSV ───────────────────────────────────────────────────────────────
   if (outputFormat === 'csv_only' || outputFormat === 'both') {
     const csvContent = recordsToCsv(results);
     const store = await Actor.openKeyValueStore();
     await store.setValue('firmographic_results.csv', csvContent, { contentType: 'text/csv' });
 
     const storeId = store.id;
-    log.info(`CSV saved to Key-Value Store: ${storeId}/firmographic_results.csv`);
-
-    // Log the public URL
     const kvUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/firmographic_results.csv`;
-    log.info(`Download CSV at: ${kvUrl}`);
 
-    // Save summary to KV store too
+    log.info(`CSV saved → ${kvUrl}`);
+
     await store.setValue('enrichment_summary', {
       total: urlsToProcess.length,
       succeeded,
@@ -185,9 +170,8 @@ const firmographics = await extractFirmographics(
     });
   }
 
-  // ── Final summary ─────────────────────────────────────────────────────────
   await Actor.setStatusMessage(
-    `Done! Enriched ${succeeded}/${urlsToProcess.length} companies. ${failed} failed.`
+    `✅ Done! Enriched ${succeeded}/${urlsToProcess.length} companies. ${failed} failed.`
   );
 
   log.info('Actor finished successfully.');
