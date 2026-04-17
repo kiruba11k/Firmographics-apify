@@ -2,23 +2,37 @@
   "title": "Firmographic Enrichment Actor",
   "type": "object",
   "schemaVersion": 1,
-  "description": "Enriches company firmographic data from a website URL. Extract employee range, revenue, funding stage, founding year, and company status.",
+  "description": "Enriches company firmographic data from a website URL. Extracts employee range, revenue, funding stage, founding year, investors, and company status from live SERP data — no hallucination.",
   "properties": {
     "websiteUrl": {
-      "title": "Single Website URL",
+      "title": "Company Website URL",
       "type": "string",
-      "description": "A single company website URL to enrich.",
+      "description": "The company website URL to enrich (e.g. https://stripe.com).",
       "editor": "textfield",
       "example": "https://stripe.com"
+    },
+    "serpApiKey": {
+      "title": "SerpApi Key",
+      "type": "string",
+      "description": "Your SerpApi API key. Get one free at serpapi.com. Can also be set via SERP_API_KEY env var.",
+      "editor": "textfield",
+      "isSecret": true
+    },
+    "groqApiKey": {
+      "title": "Groq API Key",
+      "type": "string",
+      "description": "Your Groq API key for LLM extraction. Get one free at console.groq.com. Can also be set via GROQ_API_KEY env var.",
+      "editor": "textfield",
+      "isSecret": true
     },
     "groqModel": {
       "title": "Groq Model",
       "type": "string",
-      "description": "Groq model to use for extraction. llama-3.1-8b-instant is fastest and free.",
-      "default": "llama-3.1-8b-instant",
+      "description": "Groq model to use. llama-3.3-70b-versatile gives the best extraction accuracy. llama-3.1-8b-instant is faster but less accurate.",
+      "default": "llama-3.3-70b-versatile",
       "enum": [
-        "llama-3.1-8b-instant",
         "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
         "llama3-8b-8192",
         "mixtral-8x7b-32768"
       ],
@@ -27,8 +41,8 @@
     "maxConcurrency": {
       "title": "Max Concurrent Requests",
       "type": "integer",
-      "description": "Maximum number of URLs to process simultaneously. Keep low to avoid API rate limits.",
-      "default": 3,
+      "description": "Max URLs processed simultaneously. Keep at 2–3 to avoid SerpApi rate limits.",
+      "default": 2,
       "minimum": 1,
       "maximum": 10,
       "editor": "number"
@@ -36,8 +50,8 @@
     "delayBetweenRequestsMs": {
       "title": "Delay Between Requests (ms)",
       "type": "integer",
-      "description": "Milliseconds to wait between SERP API calls to avoid rate limiting.",
-      "default": 1000,
+      "description": "Milliseconds to wait between SERP API calls. Increase if hitting rate limits.",
+      "default": 1500,
       "minimum": 500,
       "maximum": 10000,
       "editor": "number"
@@ -45,7 +59,7 @@
     "outputFormat": {
       "title": "Output Format",
       "type": "string",
-      "description": "Dataset output is always available. This also saves a CSV file to the key-value store.",
+      "description": "Dataset output is always available. 'both' also saves a downloadable CSV to the key-value store.",
       "default": "both",
       "enum": ["dataset_only", "csv_only", "both"],
       "editor": "select"
