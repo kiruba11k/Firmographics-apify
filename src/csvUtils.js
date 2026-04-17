@@ -2,7 +2,6 @@
  * csvUtils.js
  * Handles CSV parsing (input) and CSV generation (output).
  */
-
 import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
 
@@ -39,57 +38,52 @@ export function parseUrlsFromCsv(csvContent, columnName = 'website') {
       columns: true,
       skip_empty_lines: true,
       trim: true,
-      bom: true, // Handle BOM from Excel exports
+      bom: true,
     });
   } catch (err) {
     throw new Error(`Failed to parse CSV: ${err.message}`);
   }
 
-  if (!records.length) {
-    throw new Error('CSV file is empty');
-  }
+  if (!records.length) throw new Error('CSV file is empty');
 
-  // Try the specified column first, then fallback to common alternatives
   const availableColumns = Object.keys(records[0]);
   const fallbackCols = ['website', 'url', 'Website', 'URL', 'domain', 'Domain', 'company_url'];
   const targetCol =
-    availableColumns.find((c) => c === columnName) ||
-    availableColumns.find((c) => fallbackCols.includes(c));
+    availableColumns.find(c => c === columnName) ||
+    availableColumns.find(c => fallbackCols.includes(c));
 
   if (!targetCol) {
     throw new Error(
-      `Column "${columnName}" not found in CSV. Available columns: ${availableColumns.join(', ')}`
+      `Column "${columnName}" not found. Available: ${availableColumns.join(', ')}`
     );
   }
 
   const urls = records
-    .map((r) => r[targetCol])
+    .map(r => r[targetCol])
     .filter(Boolean)
-    .map((url) => normalizeUrl(url));
+    .map(url => normalizeUrl(url));
 
-  const unique = [...new Set(urls.filter(Boolean))];
-  return { urls: unique, totalRows: records.length, columnUsed: targetCol };
+  return {
+    urls: [...new Set(urls.filter(Boolean))],
+    totalRows: records.length,
+    columnUsed: targetCol,
+  };
 }
 
 /**
- * Normalize a URL - ensure it has https:// prefix
+ * Normalize a URL — ensure https:// prefix
  */
 export function normalizeUrl(raw) {
   if (!raw) return null;
   raw = raw.trim();
   if (!raw) return null;
-
-  // Already has protocol
   if (/^https?:\/\//i.test(raw)) return raw.toLowerCase();
-
-  // Looks like a domain
   if (raw.includes('.')) return `https://${raw.toLowerCase()}`;
-
   return null;
 }
 
 /**
- * Extract domain from URL for display
+ * Extract hostname from URL
  */
 export function extractDomain(url) {
   try {
@@ -103,7 +97,7 @@ export function extractDomain(url) {
  * Convert array of firmographic records to CSV string
  */
 export function recordsToCsv(records) {
-  const rows = records.map((r) => {
+  const rows = records.map(r => {
     const row = {};
     for (const col of CSV_COLUMNS) {
       const val = r[col];
@@ -111,15 +105,11 @@ export function recordsToCsv(records) {
     }
     return row;
   });
-
-  return stringify(rows, {
-    header: true,
-    columns: CSV_COLUMNS,
-  });
+  return stringify(rows, { header: true, columns: CSV_COLUMNS });
 }
 
 /**
- * Format large numbers for display
+ * Format large USD numbers for display
  */
 export function formatUsd(amount) {
   if (!amount) return '';
