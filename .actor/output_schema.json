@@ -1,0 +1,101 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Company Enrichment Output",
+  "properties": {
+    "company_domain": {
+      "type": "string",
+      "title": "Company Domain",
+      "template": "{{company_domain}}"
+    },
+    "company_name": {
+      "type": "string",
+      "title": "Company Name",
+      "template": "{{company_name}}"
+    },
+    "company_status": {
+      "type": "string",
+      "title": "Company Status",
+      "template": "{{company_status}}"
+    },
+    "data_confidence": {
+      "type": "string",
+      "title": "Data Confidence",
+      "template": "{{data_confidence}}"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "template": "{{description}}"
+    },
+    "employee_max": {
+      "type": "string",
+      "title": "Employee Max",
+      "template": "{{employee_max}}"
+    },
+    "employee_min": {
+      "type": "string",
+      "title": "Employee Min",
+      "template": "{{employee_min}}"
+    },
+    "enriched_at": {
+      "type": "string",
+      "title": "Enriched At",
+      "template": "{{enriched_at}}"
+    },
+    "evidence_url": {
+      "type": "string",
+      "title": "Evidence URL",
+      "template": "{{evidence_url}}"
+    },
+    "founded_year_max": {
+      "type": "string",
+      "title": "Founded Year Max",
+      "template": "{{founded_year_max}}"
+    },
+    "founded_year_min": {
+      "type": "string",
+      "title": "Founded Year Min",
+      "template": "{{founded_year_min}}"
+    },
+    "funding_stage_include": {
+      "type": "string",
+      "title": "Funding Stage Include",
+      "template": "{{funding_stage_include}}"
+    },
+    "headquarters": {
+      "type": "string",
+      "title": "Headquarters",
+      "template": "{{headquarters}}"
+    },
+    "industry": {
+      "type": "string",
+      "title": "Industry",
+      "template": "{{industry}}"
+    },
+    "input_url": {
+      "type": "string",
+      "title": "Input URL",
+      "template": "{{input_url}}"
+    },
+    "notable_investors": {
+      "type": "string",
+      "title": "Notable Investors",
+      "template": "{{notable_investors}}"
+    },
+    "revenue_max_usd": {
+      "type": "string",
+      "title": "Revenue Max USD",
+      "template": "{{revenue_max_usd}}"
+    },
+    "revenue_min_usd": {
+      "type": "string",
+      "title": "Revenue Min USD",
+      "template": "{{revenue_min_usd}}"
+    },
+    "total_funding_usd": {
+      "type": "string",
+      "title": "Total Funding USD",
+      "template": "{{total_funding_usd}}"
+    }
+  }
+}
