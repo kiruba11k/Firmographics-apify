@@ -1,0 +1,36 @@
+{
+  "title": "Firmographic Enrichment Dataset Schema",
+  "description": "Dataset schema for enriched firmographic company information",
+  "views": {
+    "overview": {
+      "title": "Overview",
+      "transformation": {
+        "fields": [
+          "company_domain",
+          "company_name",
+          "company_status",
+          "data_confidence",
+          "description",
+          "employee_min",
+          "employee_max",
+          "enriched_at",
+          "evidence_url",
+          "founded_year_min",
+          "founded_year_max",
+          "funding_stage_include",
+          "headquarters",
+          "industry",
+          "input_url",
+          "notable_investors",
+          "revenue_min_usd",
+          "revenue_max_usd",
+          "total_funding_usd"
+        ]
+      },
+      "display": {
+        "component": "table"
+      }
+    }
+  },
+  "actorSpecification": 1
+}
