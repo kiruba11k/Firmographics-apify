@@ -1,0 +1,83 @@
+{
+  "actorKeyValueStoreSchemaVersion": 1,
+  "title": "Firmographic Enrichment Key Value Store Schema",
+  "description": "Schema for storing metadata, enrichment summaries, execution logs, and statistics for the Firmographic Enrichment Actor.",
+  "type": "object",
+  "collections": {
+    "records": {
+      "keyPrefix": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "runInfo": {
+            "type": "object",
+            "title": "Run Information",
+            "properties": {
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "finishedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string"
+              },
+              "totalCompaniesProcessed": {
+                "type": "integer"
+              }
+            }
+          },
+          "inputMetadata": {
+            "type": "object",
+            "title": "Input Metadata",
+            "properties": {
+              "inputUrl": {
+                "type": "string"
+              },
+              "domain": {
+                "type": "string"
+              },
+              "requestedFields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "enrichmentStatistics": {
+            "type": "object",
+            "title": "Enrichment Statistics",
+            "properties": {
+              "successfulEnrichments": {
+                "type": "integer"
+              },
+              "failedEnrichments": {
+                "type": "integer"
+              },
+              "averageConfidenceScore": {
+                "type": "string"
+              }
+            }
+          },
+          "logs": {
+            "type": "array",
+            "title": "Execution Logs",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "title": "Execution Errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
