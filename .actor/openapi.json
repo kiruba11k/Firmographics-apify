@@ -1,0 +1,160 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Firmographic Enrichment API",
+    "description": "Web server API for accessing enriched firmographic company data from the actor.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server (Apify will overwrite this automatically in deployment)"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health check endpoint",
+        "responses": {
+          "200": {
+            "description": "Server is running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companies": {
+      "get": {
+        "operationId": "getCompanies",
+        "summary": "Get enriched company data",
+        "description": "Returns enriched firmographic company records.",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyEnrichment"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompanyEnrichment": {
+        "type": "object",
+        "properties": {
+          "company_domain": {
+            "type": "string",
+            "description": "Official company domain or website"
+          },
+          "company_name": {
+            "type": "string",
+            "description": "Company name"
+          },
+          "company_status": {
+            "type": "string",
+            "description": "Current operational status of the company"
+          },
+          "data_confidence": {
+            "type": "string",
+            "description": "Confidence level of the enriched data"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the company"
+          },
+          "employee_max": {
+            "type": "string",
+            "description": "Maximum estimated employee count"
+          },
+          "employee_min": {
+            "type": "string",
+            "description": "Minimum estimated employee count"
+          },
+          "enriched_at": {
+            "type": "string",
+            "description": "Timestamp when enrichment was completed"
+          },
+          "evidence_url": {
+            "type": "string",
+            "description": "Source URL used as enrichment evidence"
+          },
+          "founded_year_max": {
+            "type": "string",
+            "description": "Maximum estimated founded year"
+          },
+          "founded_year_min": {
+            "type": "string",
+            "description": "Minimum estimated founded year"
+          },
+          "funding_stage_include": {
+            "type": "string",
+            "description": "Funding stage information"
+          },
+          "headquarters": {
+            "type": "string",
+            "description": "Company headquarters location"
+          },
+          "industry": {
+            "type": "string",
+            "description": "Industry category"
+          },
+          "input_url": {
+            "type": "string",
+            "description": "Original input URL provided for enrichment"
+          },
+          "notable_investors": {
+            "type": "string",
+            "description": "List of notable investors"
+          },
+          "revenue_max_usd": {
+            "type": "string",
+            "description": "Maximum estimated revenue in USD"
+          },
+          "revenue_min_usd": {
+            "type": "string",
+            "description": "Minimum estimated revenue in USD"
+          },
+          "total_funding_usd": {
+            "type": "string",
+            "description": "Total funding raised in USD"
+          }
+        },
+        "required": [
+          "company_domain",
+          "company_name",
+          "company_status",
+          "data_confidence",
+          "description",
+          "employee_max",
+          "employee_min",
+          "enriched_at",
+          "evidence_url",
+          "headquarters",
+          "industry",
+          "input_url"
+        ]
+      }
+    }
+  }
+}
