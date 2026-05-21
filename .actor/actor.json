@@ -2,11 +2,23 @@
   "actorSpecification": 1,
   "name": "firmographic-enrichment",
   "title": "Firmographic Enrichment Actor",
-  "description": "Enrich company data (employees, revenue, funding stage, founding year, status) from a website URL. Uses SERP_API_KEY and GROQ_API_KEY environment variables by default.",
+  "description": "Enrich company data including employees, revenue, funding stage, founding year, company status, and headquarters from website URLs using SERP API and GROQ API.",
   "version": "1.0",
+
   "meta": {
     "templateId": "js-start"
   },
+
+  "dockerfile": "../Dockerfile",
+
   "input": "./input_schema.json",
-  "dockerfile": "../Dockerfile"
+  "output": "./output_schema.json",
+
+  "storages": {
+    "dataset": "./dataset_schema.json",
+    "keyValueStore": "./key_value_store_schema.json"
+  },
+
+  "usesStandbyMode": true,
+  "webServerSchema": "./openapi.json"
 }
