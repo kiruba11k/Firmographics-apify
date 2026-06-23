@@ -11,20 +11,6 @@
       "editor": "textfield",
       "example": "https://stripe.com"
     },
-    "serpApiKey": {
-      "title": "SerpApi Key",
-      "type": "string",
-      "description": "Your SerpApi API key. Get one free at serpapi.com. Can also be set via SERP_API_KEY env var.",
-      "editor": "textfield",
-      "isSecret": true
-    },
-    "groqApiKey": {
-      "title": "Groq API Key",
-      "type": "string",
-      "description": "Your Groq API key for LLM extraction. Get one free at console.groq.com. Can also be set via GROQ_API_KEY env var.",
-      "editor": "textfield",
-      "isSecret": true
-    },
     "groqModel": {
       "title": "Groq Model",
       "type": "string",
