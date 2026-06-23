@@ -9,7 +9,6 @@
       "type": "string",
       "description": "The company website URL to enrich (e.g. https://stripe.com).",
       "editor": "textfield",
-      "default": "https://stripe.com",
       "example": "https://stripe.com"
     },
     "serpApiKey": {
