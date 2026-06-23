@@ -33,13 +33,13 @@ Input a single URL → Get structured firmographic data:
 - Free tier: generous rate limits
 - Model: `llama-3.1-8b-instant` (fastest, free)
 
-### 2. Configure Input
+### 2. Configure Actor Secrets
 
-Set these environment variables in your Actor settings:
+Do not pass API keys in the actor input. Add these as environment variables in your Apify Actor settings before building/running the actor:
 - `SERP_API_KEY`
 - `GROQ_API_KEY`
 
-Then provide the input:
+Then provide only the public input fields:
 ```json
 {
   "websiteUrl": "https://stripe.com"
@@ -107,7 +107,7 @@ Output
 # Install dependencies
 npm install
 
-# Set env vars
+# Set env vars locally (in Apify, configure these in Actor settings)
 export SERP_API_KEY=your_serpapi_key
 export GROQ_API_KEY=your_groq_key
 

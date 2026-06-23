@@ -29,19 +29,17 @@ try {
 
   const {
     websiteUrl,
-    serpApiKey: inputSerpApiKey,
-    groqApiKey: inputGroqApiKey,
     groqModel = 'llama-3.3-70b-versatile', // Better accuracy for extraction
     maxConcurrency = 2,                      // Conservative default to respect rate limits
     delayBetweenRequestsMs = 1500,
     outputFormat = 'both',
   } = input;
 
-  const serpApiKey = inputSerpApiKey || process.env.SERP_API_KEY;
-  const groqApiKey = inputGroqApiKey || process.env.GROQ_API_KEY;
+  const serpApiKey = process.env.SERP_API_KEY;
+  const groqApiKey = process.env.GROQ_API_KEY;
 
-  if (!serpApiKey) throw new Error('Missing SerpApi key. Set SERP_API_KEY env var or provide serpApiKey in input.');
-  if (!groqApiKey) throw new Error('Missing Groq key. Set GROQ_API_KEY env var or provide groqApiKey in input.');
+  if (!serpApiKey) throw new Error('Missing SerpApi key. Set SERP_API_KEY in the Actor environment variables.');
+  if (!groqApiKey) throw new Error('Missing Groq key. Set GROQ_API_KEY in the Actor environment variables.');
   if (!websiteUrl) throw new Error('websiteUrl is required.');
 
   // ── Normalize and validate URL ─────────────────────────────────────────────
