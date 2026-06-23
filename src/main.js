@@ -23,7 +23,9 @@ import {
 await Actor.init();
 
 try {
-  const input = (await Actor.getInput()) || { websiteUrl: 'https://stripe.com' };
+  const input = await Actor.getInput();
+
+  if (!input) throw new Error('No input provided. Please configure the actor input.');
 
   const {
     websiteUrl,
@@ -38,6 +40,8 @@ try {
   const serpApiKey = inputSerpApiKey || process.env.SERP_API_KEY;
   const groqApiKey = inputGroqApiKey || process.env.GROQ_API_KEY;
 
+  if (!serpApiKey) throw new Error('Missing SerpApi key. Set SERP_API_KEY env var or provide serpApiKey in input.');
+  if (!groqApiKey) throw new Error('Missing Groq key. Set GROQ_API_KEY env var or provide groqApiKey in input.');
   if (!websiteUrl) throw new Error('websiteUrl is required.');
 
   // ── Normalize and validate URL ─────────────────────────────────────────────
@@ -68,70 +72,42 @@ try {
     };
 
     try {
-      if (!serpApiKey || !groqApiKey) {
-        const missingServices = [
-          !serpApiKey ? 'SerpApi' : null,
-          !groqApiKey ? 'Groq' : null,
-        ].filter(Boolean).join(' and ');
-        const message = `${missingServices} API key${missingServices.includes(' and ') ? 's are' : ' is'} missing. Provide serpApiKey/groqApiKey in input or set SERP_API_KEY/GROQ_API_KEY environment variables to run live enrichment.`;
+      // Step 1: Gather web context
+      const serpContext = await gatherCompanyContext(domain, serpApiKey, fetch, log);
 
-        log.warning(`${domain}: ${message}`);
-        record.company_name = domain;
-        record.company_status = 'unknown';
+      if (!serpContext.trim()) {
+        log.warning(`No SERP context gathered for ${domain}`);
         record.data_confidence = 'low';
-        record.description = null;
-        record.employee_min = null;
-        record.employee_max = null;
-        record.evidence_url = null;
-        record.founded_year_min = null;
-        record.founded_year_max = null;
-        record.funding_stage_include = null;
-        record.headquarters = null;
-        record.industry = null;
-        record.notable_investors = null;
-        record.revenue_min_usd = null;
-        record.revenue_max_usd = null;
-        record.total_funding_usd = null;
-        record.error = message;
-        succeeded++;
+        record.error = 'No SERP data returned — check SerpApi key or domain';
+        failed++;
       } else {
-        // Step 1: Gather web context
-        const serpContext = await gatherCompanyContext(domain, serpApiKey, fetch, log);
+        log.info(`Context gathered for ${domain} (${serpContext.length} chars). Running LLM extraction...`);
+        await Actor.setStatusMessage(`Enriching ${idx}/${total}: ${domain} — running LLM extraction...`);
 
-        if (!serpContext.trim()) {
-          log.warning(`No SERP context gathered for ${domain}`);
-          record.data_confidence = 'low';
-          record.error = 'No SERP data returned — check SerpApi key or domain';
-          failed++;
-        } else {
-          log.info(`Context gathered for ${domain} (${serpContext.length} chars). Running LLM extraction...`);
-          await Actor.setStatusMessage(`Enriching ${idx}/${total}: ${domain} — running LLM extraction...`);
+        // Step 2: Extract firmographics via LLM
+        const firmographics = await extractFirmographics(
+          domain,
+          serpContext,
+          groqApiKey,
+          groqModel,
+          fetch,
+          log,
+        );
 
-          // Step 2: Extract firmographics via LLM
-          const firmographics = await extractFirmographics(
-            domain,
-            serpContext,
-            groqApiKey,
-            groqModel,
-            fetch,
-            log,
-          );
-
-          // Step 3: Map fields onto record (CSV_COLUMNS as source of truth)
-          for (const col of CSV_COLUMNS) {
-            if (firmographics[col] !== undefined) {
-              record[col] = firmographics[col];
-            }
+        // Step 3: Map fields onto record (CSV_COLUMNS as source of truth)
+        for (const col of CSV_COLUMNS) {
+          if (firmographics[col] !== undefined) {
+            record[col] = firmographics[col];
           }
-
-          // Also capture any error message from extraction
-          if (firmographics.error) {
-            record.error = firmographics.error;
-          }
-
-          succeeded++;
-          log.info(`✓ ${domain}: confidence=${firmographics.data_confidence}, name="${firmographics.company_name}", employees=${firmographics.employee_min}–${firmographics.employee_max}`);
         }
+
+        // Also capture any error message from extraction
+        if (firmographics.error) {
+          record.error = firmographics.error;
+        }
+
+        succeeded++;
+        log.info(`✓ ${domain}: confidence=${firmographics.data_confidence}, name="${firmographics.company_name}", employees=${firmographics.employee_min}–${firmographics.employee_max}`);
       }
     } catch (err) {
       log.error(`Failed to enrich ${domain}: ${err.message}`);
